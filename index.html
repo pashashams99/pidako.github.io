@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pidako OS - 3D Liquid Waterfall</title>
+    <style>
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background: #000;
+            perspective: 2000px;
+        }
+        
+        #canvas-container { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: 1; 
+        }
+        
+        .overlay {
+            position: absolute;
+            z-index: 10;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            pointer-events: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transform-style: preserve-3d;
+        }
+
+        .glass-pill {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            width: 550px; height: 150px;
+            border-radius: 100px; 
+            display: flex; justify-content: center; align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 40px 100px rgba(0, 0, 0, 0.5),
+                inset 0 0 30px rgba(255, 255, 255, 0.1);
+            transform: translateZ(250px);
+            transition: transform 0.2s ease-out;
+        }
+
+        h1 { 
+            color: #fff; font-size: 4rem; 
+            margin: 0; letter-spacing: 12px; font-weight: 900;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        h2 { 
+            color: rgba(255,255,255,0.9); font-size: 1.8rem; letter-spacing: 18px; 
+            font-weight: 300; text-transform: uppercase;
+            transform: translateZ(120px);
+            margin-top: 50px;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+    </style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<div class="overlay" id="ui-layer">
+    <div class="glass-pill" id="pill">
+        <h1>PIDAKO OS</h1>
+    </div>
+    <h2 id="subtext">COMING SOON</h2>
+</div>
+
+<script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+
+    const fragmentShader = `
+        precision highp float;
+        uniform float uTime;
+        uniform vec2 uResolution;
+        varying vec2 vUv;
+
+        // Simplex 3D Noise for Liquid Physics
+        vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+        vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+        float snoise(vec3 v) {
+            const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+            const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+            vec3 i  = floor(v + dot(v, C.yyy) );
+            vec3 x0 = v - i + dot(i, C.xxx) ;
+            vec3 g = step(x0.yzx, x0.xyz);
+            vec3 l = 1.0 - g;
+            vec3 i1 = min( g.xyz, l.zxy );
+            vec3 i2 = max( g.xyz, l.zxy );
+            vec3 x1 = x0 - i1 + C.xxx;
+            vec3 x2 = x0 - i2 + C.yyy;
+            vec3 x3 = x0 - D.yyy;
+            i = mod289(i);
+            vec4 p = permute( permute( permute( i.z + vec4(0.0, i1.z, i2.z, 1.0 )) + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
+            float n_ = 1.0/7.0;
+            vec3  ns = n_ * D.wyz - D.xzx;
+            vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+            vec4 x_ = floor(j * ns.z);
+            vec4 y_ = floor(j - 7.0 * x_ );
+            vec4 x = x_ *ns.x + ns.yyyy;
+            vec4 y = y_ *ns.x + ns.yyyy;
+            vec4 h = 1.0 - abs(x) - abs(y);
+            vec4 b0 = vec4( x.xy, y.xy );
+            vec4 b1 = vec4( x.zw, y.zw );
+            vec4 s0 = floor(b0)*2.0 + 1.0;
+            vec4 s1 = floor(b1)*2.0 + 1.0;
+            vec4 sh = -step(h, vec4(0.0));
+            vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
+            vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
+            vec3 p0 = vec3(a0.xy,h.x);
+            vec3 p1 = vec3(a0.zw,h.y);
+            vec3 p2 = vec3(a1.xy,h.z);
+            vec3 p3 = vec3(a1.zw,h.w);
+            vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+            p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+            vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+            m = m * m;
+            return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) );
+        }
+
+        void main() {
+            vec2 uv = vUv;
+            
+            // سقوط آب
+            float flow = uTime * 1.2;
+            float n = snoise(vec3(uv.x * 2.5, uv.y * 0.8 + flow, uTime * 0.1));
+            n += 0.5 * snoise(vec3(uv.x * 5.0, uv.y * 1.5 + flow, uTime * 0.2));
+            
+            // هایلایت‌های درخشان روی جریان آب
+            float highlight = pow(max(0.0, n), 8.0) * 1.5;
+            
+            // پالت رنگی
+            vec3 baseBlue = vec3(0.0, 0.05, 0.15); // عمق آب
+            vec3 waterBlue = vec3(0.0, 0.35, 0.7); // بدنه آب
+            vec3 lightBlue = vec3(0.4, 0.8, 1.0);  // بازتاب نور
+            
+            vec3 color = mix(baseBlue, waterBlue, smoothstep(-0.8, 0.4, n));
+            color = mix(color, lightBlue, smoothstep(0.3, 0.9, n));
+            color += highlight * vec3(0.9, 0.95, 1.0);
+
+            // تیره کردن لبه‌ها
+            color *= 1.0 - distance(uv, vec2(0.5)) * 0.8;
+
+            gl_FragColor = vec4(color, 1.0);
+        }
+    `;
+
+    let scene, camera, renderer, mesh;
+    const pill = document.getElementById('pill');
+    const subtext = document.getElementById('subtext');
+
+    init();
+    animate();
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.Camera(); 
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const geometry = new THREE.PlaneGeometry(2, 2);
+        const uniforms = {
+            uTime: { value: 0 },
+            uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+        };
+
+        const material = new THREE.ShaderMaterial({
+            uniforms,
+            vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`,
+            fragmentShader
+        });
+
+        mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        window.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 2;
+            const y = (e.clientY / window.innerHeight - 0.5) * 2;
+            
+            const tiltX = -y * 25;
+            const tiltY = x * 25;
+
+            pill.style.transform = `translateZ(250px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+            subtext.style.transform = `translateZ(120px) rotateX(${tiltX * 0.7}deg) rotateY(${tiltY * 0.7}deg)`;
+        });
+
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+        });
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        mesh.material.uniforms.uTime.value = performance.now() * 0.001;
+        renderer.render(scene, camera);
+    }
+</script>
+</body>
+</html>
