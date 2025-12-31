@@ -1,224 +1,341 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pidako OS - 3D Liquid Waterfall</title>
-    <style>
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            overflow: hidden; background: #000;
-            perspective: 2000px;
-        }
-        
-        #canvas-container { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: 1; 
-        }
-        
-        .overlay {
-            position: absolute;
-            z-index: 10;
-            width: 100%; height: 100%;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            pointer-events: none;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            transform-style: preserve-3d;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pasha | نمونه کارهای طراحی وب</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        .glass-pill {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(30px) saturate(180%);
-            -webkit-backdrop-filter: blur(30px) saturate(180%);
-            width: 550px; height: 150px;
-            border-radius: 100px; 
-            display: flex; justify-content: center; align-items: center;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 
-                0 40px 100px rgba(0, 0, 0, 0.5),
-                inset 0 0 30px rgba(255, 255, 255, 0.1);
-            transform: translateZ(250px);
-            transition: transform 0.2s ease-out;
-        }
+    body {
+      background: #0a0a0f;
+      color: #e0e0e5;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
 
-        h1 { 
-            color: #fff; font-size: 4rem; 
-            margin: 0; letter-spacing: 12px; font-weight: 900;
-            text-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        }
+    header {
+      padding: 5rem 1.5rem 2rem;
+      text-align: center;
+    }
 
-        h2 { 
-            color: rgba(255,255,255,0.9); font-size: 1.8rem; letter-spacing: 18px; 
-            font-weight: 300; text-transform: uppercase;
-            transform: translateZ(120px);
-            margin-top: 50px;
-            text-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        }
+    header h1 {
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      margin-bottom: 0.8rem;
+      background: linear-gradient(90deg, #f5c400, #ffaa00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
-        /* توضیح PIDAKO OS زیر COMING SOON */
-        #description {
-            color: rgba(255,255,255,0.85);
-            font-size: 1rem;
-            max-width: 650px;
-            text-align: center;
-            margin-top: 25px;
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 50px;
-            padding: 20px 30px;
-            border: 1px solid rgba(255,255,255,0.3);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.4), inset 0 0 15px rgba(255,255,255,0.05);
-            transform: translateZ(100px);
-            transition: transform 0.2s ease-out;
-        }
-    </style>
+    header p {
+      color: #a0a0b0;
+      max-width: 720px;
+      margin: 0 auto;
+      font-size: 1.05rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin: 2rem 1rem;
+      padding: 0 1rem;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      justify-content: center;
+    }
+
+    .filters button {
+      background: #17171f;
+      color: #d0d0d8;
+      border: 1px solid #2a2a35;
+      padding: 0.65rem 1.3rem;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.92rem;
+      transition: all 0.2s ease;
+    }
+
+    .filters button:hover {
+      background: #22222e;
+      border-color: #3a3a4a;
+    }
+
+    .filters button.active {
+      background: #f5c400;
+      color: #0f0f14;
+      border-color: #f5c400;
+      font-weight: 600;
+    }
+
+    .search-container {
+      position: relative;
+      max-width: 340px;
+      width: 100%;
+    }
+
+    .search-container input {
+      width: 100%;
+      padding: 0.7rem 1rem 0.7rem 2.8rem;
+      border: 1px solid #2a2a35;
+      border-radius: 12px;
+      background: #17171f;
+      color: #e0e0e5;
+      font-size: 0.95rem;
+    }
+
+    .search-container input:focus {
+      outline: none;
+      border-color: #f5c400;
+      box-shadow: 0 0 0 3px rgba(245, 196, 0, 0.15);
+    }
+
+    .search-container::before {
+      content: "🔍";
+      position: absolute;
+      top: 50%;
+      right: 1rem;
+      transform: translateY(-50%);
+      color: #777;
+    }
+
+    .counter {
+      text-align: center;
+      color: #a0a0b0;
+      font-size: 0.95rem;
+      margin: 0.5rem 0 1.5rem;
+    }
+
+    .grid {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 1.5rem 5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 1.6rem;
+    }
+
+    .card {
+      background: #12121a;
+      border: 1px solid #252530;
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.2, 0, 0.1, 1);
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .card:hover {
+      transform: translateY(-8px) scale(1.02);
+      border-color: #f5c40044;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    }
+
+    .card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      background: #1a1a24;
+    }
+
+    .content {
+      padding: 1.2rem 1.3rem;
+    }
+
+    .code {
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      color: #f5c400;
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.8px;
+    }
+
+    .card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .card p {
+      font-size: 0.9rem;
+      color: #a0a0b0;
+      line-height: 1.55;
+      margin-bottom: 1.2rem;
+    }
+
+    .card a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: #f5c400;
+      color: #0f0f14;
+      padding: 0.65rem 1.2rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .card a:hover {
+      background: #ffd633;
+      transform: translateY(-2px);
+    }
+
+    .card a svg {
+      fill: #0f0f14;
+    }
+
+    footer {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #606070;
+      font-size: 0.9rem;
+      border-top: 1px solid #1e1e28;
+    }
+
+    @media (max-width: 600px) {
+      header { padding-top: 4rem; }
+      .controls { flex-direction: column; align-items: center; }
+      .search-container { max-width: 100%; }
+    }
+  </style>
 </head>
 <body>
 
-<div id="canvas-container"></div>
+<header>
+  <h1>نمونه پروژه‌های طراحی وب</h1>
+  <p>
+    پروژه‌ها بر اساس نوع دسته‌بندی شده‌اند. برای سفارش فقط کد پروژه (مثلاً Code-17) را برایم ارسال کنید.
+  </p>
+</header>
 
-<div class="overlay" id="ui-layer">
-    <div class="glass-pill" id="pill">
-        <h1>PIDAKO OS</h1>
-    </div>
-    <h2 id="subtext">COMING SOON</h2>
-    <p id="description">
-        PIDAKO OS is a high-performance Linux distribution built on Kali, designed for hackers, developers, and cybersecurity enthusiasts. It combines the full power of Kali's penetration testing and network security tools with a sleek, modern interface, optimized for speed and performance on any hardware. Featuring a dark, minimalistic theme, advanced customization options, and enhanced privacy settings, PIDAKO OS lets you focus on what matters most: security, development, and creativity. Whether you're running complex scripts, testing networks, or building applications, PIDAKO OS delivers a smooth, stylish, and secure platform where power, speed, and style coexist seamlessly.
-    </p>
+<div class="controls">
+  <div class="filters">
+    <button class="active" data-filter="all" onclick="filterProjects('all')">همه</button>
+    <button data-filter="template" onclick="filterProjects('template')">قالب‌ها</button>
+    <button data-filter="plugin" onclick="filterProjects('plugin')">افزونه‌ها</button>
+    <button data-filter="webapp" onclick="filterProjects('webapp')">وب‌اپلیکیشن</button>
+    <button data-filter="game" onclick="filterProjects('game')">بازی</button>
+  </div>
+  <div class="search-container">
+    <input type="search" id="searchInput" placeholder="جستجو بر اساس کد یا عنوان...">
+  </div>
 </div>
 
-<script type="importmap">
-    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
-</script>
+<div class="counter" id="counter">نمایش ۰ از ۰ پروژه</div>
 
-<script type="module">
-    import * as THREE from 'three';
+<div class="grid" id="projects"></div>
 
-    const fragmentShader = `
-        precision highp float;
-        uniform float uTime;
-        uniform vec2 uResolution;
-        varying vec2 vUv;
+<footer>
+  © ۱۴۰۴ — Pasha | تلگرام: @Qyvero
+</footer>
 
-        vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-        vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-        vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
-        vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+<script>
+const projectsContainer = document.getElementById('projects');
+const searchInput = document.getElementById('searchInput');
+const counter = document.getElementById('counter');
 
-        float snoise(vec3 v) {
-            const vec2 C = vec2(1.0/6.0, 1.0/3.0);
-            const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
-            vec3 i  = floor(v + dot(v, C.yyy) );
-            vec3 x0 = v - i + dot(i, C.xxx) ;
-            vec3 g = step(x0.yzx, x0.xyz);
-            vec3 l = 1.0 - g;
-            vec3 i1 = min( g.xyz, l.zxy );
-            vec3 i2 = max( g.xyz, l.zxy );
-            vec3 x1 = x0 - i1 + C.xxx;
-            vec3 x2 = x0 - i2 + C.yyy;
-            vec3 x3 = x0 - D.yyy;
-            i = mod289(i);
-            vec4 p = permute( permute( permute( i.z + vec4(0.0, i1.z, i2.z, 1.0 )) + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
-            float n_ = 1.0/7.0;
-            vec3  ns = n_ * D.wyz - D.xzx;
-            vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
-            vec4 x_ = floor(j * ns.z);
-            vec4 y_ = floor(j - 7.0 * x_ );
-            vec4 x = x_ *ns.x + ns.yyyy;
-            vec4 y = y_ *ns.x + ns.yyyy;
-            vec4 h = 1.0 - abs(x) - abs(y);
-            vec4 b0 = vec4( x.xy, y.xy );
-            vec4 b1 = vec4( x.zw, y.zw );
-            vec4 s0 = floor(b0)*2.0 + 1.0;
-            vec4 s1 = floor(b1)*2.0 + 1.0;
-            vec4 sh = -step(h, vec4(0.0));
-            vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
-            vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
-            vec3 p0 = vec3(a0.xy,h.x);
-            vec3 p1 = vec3(a0.zw,h.y);
-            vec3 p2 = vec3(a1.xy,h.z);
-            vec3 p3 = vec3(a1.zw,h.w);
-            vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
-            p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
-            vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
-            m = m * m;
-            return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) );
-        }
+const categories = ['template', 'plugin', 'webapp', 'game'];
+const titles = {
+  template: 'قالب وب‌سایت',
+  plugin:   'افزونه وردپرس',
+  webapp:   'وب‌اپلیکیشن',
+  game:     'بازی تحت مرورگر'
+};
 
-        void main() {
-            vec2 uv = vUv;
-            float flow = uTime * 1.2;
-            float n = snoise(vec3(uv.x * 2.5, uv.y * 0.8 + flow, uTime * 0.1));
-            n += 0.5 * snoise(vec3(uv.x * 5.0, uv.y * 1.5 + flow, uTime * 0.2));
-            float highlight = pow(max(0.0, n), 8.0) * 1.5;
-            vec3 baseBlue = vec3(0.0, 0.05, 0.15);
-            vec3 waterBlue = vec3(0.0, 0.35, 0.7);
-            vec3 lightBlue = vec3(0.4, 0.8, 1.0);
-            vec3 color = mix(baseBlue, waterBlue, smoothstep(-0.8, 0.4, n));
-            color = mix(color, lightBlue, smoothstep(0.3, 0.9, n));
-            color += highlight * vec3(0.9, 0.95, 1.0);
-            color *= 1.0 - distance(uv, vec2(0.5)) * 0.8;
-            gl_FragColor = vec4(color, 1.0);
-        }
-    `;
+const projectsData = [];
 
-    let scene, camera, renderer, mesh;
-    const pill = document.getElementById('pill');
-    const subtext = document.getElementById('subtext');
-    const description = document.getElementById('description');
+for (let i = 1; i <= 100; i++) {
+  const category = categories[i % categories.length];
+  const code = `Code-${String(i).padStart(2, '0')}`;
+  const title = titles[category];
+  const img = `https://picsum.photos/seed/pasha${i}/600/400`;
 
-    init();
-    animate();
+  const cardHTML = `
+    <div class="card ${category}" data-code="${code}" data-title="${title}">
+      <img src="${img}" loading="lazy" decoding="async" alt="${title}">
+      <div class="content">
+        <div class="code">${code}</div>
+        <h3>${title}</h3>
+        <p>طراحی حرفه‌ای با تمرکز روی تجربه کاربری، سرعت بارگذاری و کد تمیز و استاندارد.</p>
+        <a href="https://t.me/Qyvero" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 2L11 13"/>
+            <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
+          </svg>
+          سفارش این پروژه
+        </a>
+      </div>
+    </div>
+  `;
 
-    function init() {
-        scene = new THREE.Scene();
-        camera = new THREE.Camera(); 
+  projectsData.push({ html: cardHTML, category, code, title });
+}
 
-        renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
+// رندر اولیه همه پروژه‌ها
+function renderProjects(filteredData) {
+  projectsContainer.innerHTML = '';
+  filteredData.forEach((item, index) => {
+    const div = document.createElement('div');
+    div.innerHTML = item.html;
+    const card = div.firstElementChild;
+    projectsContainer.appendChild(card);
+    
+    // انیمیشن ورود با تأخیر کوچک
+    setTimeout(() => card.classList.add('visible'), 50 + index * 40);
+  });
 
-        const geometry = new THREE.PlaneGeometry(2, 2);
-        const uniforms = {
-            uTime: { value: 0 },
-            uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
-        };
+  counter.textContent = `نمایش ${filteredData.length} از ${projectsData.length} پروژه`;
+}
 
-        const material = new THREE.ShaderMaterial({
-            uniforms,
-            vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`,
-            fragmentShader
-        });
+// فیلتر کردن
+function filterProjects(filterType) {
+  document.querySelectorAll('.filters button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filterType);
+  });
 
-        mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
+  let filtered = projectsData;
 
-        window.addEventListener('mousemove', (e) => {
-            const x = (e.clientX / window.innerWidth - 0.5) * 2;
-            const y = (e.clientY / window.innerHeight - 0.5) * 2;
-            
-            const tiltX = -y * 25;
-            const tiltY = x * 25;
+  if (filterType !== 'all') {
+    filtered = filtered.filter(item => item.category === filterType);
+  }
 
-            pill.style.transform = `translateZ(250px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
-            subtext.style.transform = `translateZ(120px) rotateX(${tiltX * 0.7}deg) rotateY(${tiltY * 0.7}deg)`;
-            description.style.transform = `translateZ(100px) rotateX(${tiltX * 0.5}deg) rotateY(${tiltY * 0.5}deg)`;
-        });
+  // اعمال جستجو روی فیلتر شده‌ها
+  const searchTerm = searchInput.value.trim().toLowerCase();
+  if (searchTerm) {
+    filtered = filtered.filter(item =>
+      item.code.toLowerCase().includes(searchTerm) ||
+      item.title.toLowerCase().includes(searchTerm)
+    );
+  }
 
-        window.addEventListener('resize', () => {
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
-        });
-    }
+  renderProjects(filtered);
+}
 
-    function animate() {
-        requestAnimationFrame(animate);
-        mesh.material.uniforms.uTime.value = performance.now() * 0.001;
-        renderer.render(scene, camera);
-    }
+// جستجو زنده
+searchInput.addEventListener('input', () => {
+  const activeFilter = document.querySelector('.filters button.active')?.dataset.filter || 'all';
+  filterProjects(activeFilter);
+});
+
+// رندر اولیه
+renderProjects(projectsData);
 </script>
 </body>
 </html>
